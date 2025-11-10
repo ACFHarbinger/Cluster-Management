@@ -49,21 +49,19 @@ public class IO {
 
     public String getShellOutput(String cmd) throws Exception
     {
-        Process p = Runtime.getRuntime().exec(cmd);
+        ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
+        Process p = pb.start();
         InputStreamReader isr = new InputStreamReader(p.getInputStream());
 
         StringBuilder sb = new StringBuilder();
-        while (true)
+        int x;
+        while ((x = isr.read()) != -1)
         {
-            int x = isr.read();
-            if(x!=-1)
-            {
-                sb.append((char) x);
-            }
-            else break;
+            sb.append((char) x);
         }
 
         isr.close();
+        p.waitFor();
         p.destroy();
 
         return sb.toString();
