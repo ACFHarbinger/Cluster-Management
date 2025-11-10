@@ -214,4 +214,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/node,react,linux,windows,visualstudiocode
+# VS Code settings folder
+.vscode/
+
+# Build
+/**/target
