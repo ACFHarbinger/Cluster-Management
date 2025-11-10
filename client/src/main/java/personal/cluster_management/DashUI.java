@@ -2,6 +2,7 @@ package personal.cluster_management;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -10,7 +11,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 
 
-public class DashUI extends VBox {
+public class DashUI extends VBox implements DashUIInterface {
 
     TextField serverIPAddressTextField, dataRefreshIntervalTextField, serverPortTextField, CPULoadNameTextField, GPULoadNameTextField, CPUTemperatureNameTextField, GPUTemperatureNameTextField, CPUFanNameTextField, GPUFanNameTextField, TotalVRAMNameTextField, UsedVRAMNameTextField, UsedRAMNameTextField, AvailableRAMNameTextField;
 
@@ -186,5 +187,125 @@ public class DashUI extends VBox {
         UsedVRAMNameTextField.setDisable(isDisable);
         UsedRAMNameTextField.setDisable(isDisable);
         AvailableRAMNameTextField.setDisable(isDisable);
+    }
+
+    @Override
+    public Node getRootNode() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getRootNode'");
+    }
+
+    @Override
+    public TextField getServerIPAddressTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getServerIPAddressTextField'");
+    }
+
+    @Override
+    public TextField getDataRefreshIntervalTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getDataRefreshIntervalTextField'");
+    }
+
+    @Override
+    public TextField getServerPortTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getServerPortTextField'");
+    }
+
+    @Override
+    public TextField getCPULoadNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getCPULoadNameTextField'");
+    }
+
+    @Override
+    public TextField getGPULoadNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getGPULoadNameTextField'");
+    }
+
+    @Override
+    public TextField getCPUTemperatureNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getCPUTemperatureNameTextField'");
+    }
+
+    @Override
+    public TextField getGPUTemperatureNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getGPUTemperatureNameTextField'");
+    }
+
+    @Override
+    public TextField getCPUFanNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getCPUFanNameTextField'");
+    }
+
+    @Override
+    public TextField getGPUFanNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getGPUFanNameTextField'");
+    }
+
+    @Override
+    public TextField getTotalVRAMNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getTotalVRAMNameTextField'");
+    }
+
+    @Override
+    public TextField getUsedVRAMNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getUsedVRAMNameTextField'");
+    }
+
+    @Override
+    public TextField getUsedRAMNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getUsedRAMNameTextField'");
+    }
+
+    @Override
+    public TextField getAvailableRAMNameTextField() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAvailableRAMNameTextField'");
+    }
+
+    @Override
+    public Button getConnectDisconnectServerButton() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getConnectDisconnectServerButton'");
+    }
+
+    @Override
+    public Button getUpdateValuesButton() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getUpdateValuesButton'");
+    }
+
+    @Override
+    public Button getDonateButton() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getDonateButton'");
+    }
+
+    @Override
+    public Button getMinimizeToSystemTrayButton() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getMinimizeToSystemTrayButton'");
+    }
+
+    @Override
+    public Button getDownloadOpenHardwareMonitorButton() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getDownloadOpenHardwareMonitorButton'");
+    }
+
+    @Override
+    public ToggleButton getRunOnStartupToggleButton() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getRunOnStartupToggleButton'");
     }
 }

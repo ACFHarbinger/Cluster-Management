@@ -8,60 +8,43 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
     @Override
-    public void start(Stage primaryStage)
-    {
+    public void start(Stage primaryStage) {
         Platform.setImplicitExit(false);
-        
-        /**
-         * MODIFICATION:
-         * 1. Create the real IO object
-         * 2. Inject the real IO object into the Dash constructor
-         */
-        IO io = new IO();
-        Dash d = new Dash(this, primaryStage, io);
-        
-        Scene s = new Scene(d);
+
+        // 1. Create the controller. The controller will create its own view and service.
+        Dash dashController = new Dash(this, primaryStage);
+
+        // 2. Get the root UI node from the controller and place it in the scene.
+        Scene s = new Scene(dashController.getView());
+
         primaryStage.setScene(s);
         primaryStage.getIcons().add(new Image(getClass().getResource("assets/icon.png").toExternalForm()));
         primaryStage.setResizable(false);
         primaryStage.setTitle("PCHWRM Client By github.com/dubbadhar <3");
         primaryStage.show();
 
-        /**
-         * MODIFICATION:
-         * 3. Start the hardware init thread *after* the UI is shown
-         */
-        d.startHardwareInitThread();
+        // 3. (REMOVED) No longer need to call d.startHardwareInitThread();
+        // The Dash controller's constructor now handles starting its own background tasks.
 
-        primaryStage.setOnCloseRequest(event->{
-            try
-            {
-                if(d.isConnected){
-                    d.writeToOS("QUIT");
-                    Thread.sleep(500);
-                    d.isConnected=false;
-                }
-                Platform.exit();
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
+        // 4. Update close request to call the controller's shutdown method.
+        primaryStage.setOnCloseRequest(event -> {
+            // Tell the controller to gracefully shut down (e.g., disconnect socket)
+            dashController.shutdown();
+            
+            // Exit the application
+            Platform.exit();
         });
     }
 
-    public void openDonation()
-    {
+    public void openDonation() {
         getHostServices().showDocument("https.www.paypal.me/ladiesman6969");
     }
 
-    public void openOpenHardwareMonitorDownloads()
-    {
+    public void openOpenHardwareMonitorDownloads() {
         getHostServices().showDocument("https://openhardwaremonitor.org/downloads/");
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         launch(args);
     }
 }

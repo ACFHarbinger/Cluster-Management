@@ -14,15 +14,11 @@ import java.util.HashMap;
  * Service layer for handling all backend logic, I/O, and OS interactions.
  * This class is designed to be injected into the Dash controller and easily mocked for testing.
  */
-public class DashService {
+public class DashService implements DashServiceInterface {
 
     private final IO io;
-    private final os currentOS;
+    private final OS currentOS;
     private final String currentDir = System.getProperty("user.dir");
-
-    public enum os {
-        windows
-    }
 
     /**
      * Creates a new DashService.
@@ -30,19 +26,7 @@ public class DashService {
      */
     public DashService(IO io) {
         this.io = io;
-        this.currentOS = getOS();
-    }
-
-    /**
-     * Detects the current operating system.
-     * @return The detected OS (currently only supports windows).
-     */
-    public final os getOS() {
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            return os.windows;
-        }
-        // Other OS logic could be added here
-        return os.windows; // Default
+        this.currentOS = OS.getOS();
     }
 
     /**
@@ -114,7 +98,7 @@ public class DashService {
      * @return true if the startup entry exists, false otherwise.
      */
     public boolean checkIfRunningOnStartup() {
-        if (currentOS == os.windows) {
+        if (currentOS == OS.WINDOWS) {
             return Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", "ClusterManagement");
         }
         return false;
@@ -124,7 +108,7 @@ public class DashService {
      * Adds the application to the Windows Registry to run on startup.
      */
     public void addToStartup() {
-        if (currentOS == os.windows) {
+        if (currentOS == OS.WINDOWS) {
             Advapi32Util.registrySetStringValue(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", "ClusterManagement", "\"" + currentDir + File.separator + "ClusterManagement.exe" + "\"");
         }
     }
@@ -133,7 +117,7 @@ public class DashService {
      * Removes the application from the Windows Registry startup items.
      */
     public void removeFromStartup() {
-        if (currentOS == os.windows) {
+        if (currentOS == OS.WINDOWS) {
             Advapi32Util.registryDeleteValue(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", "ClusterManagement");
         }
     }

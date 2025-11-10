@@ -16,7 +16,7 @@ import java.util.HashMap;
  * This class manages the DashUI (View) and the DashService (Model/Service).
  * It handles UI events, validates input, and coordinates with the service layer.
  */
-public class Dash {
+public class Dash implements DashInterface {
 
     // View and Service
     private final DashUI view;
@@ -27,7 +27,6 @@ public class Dash {
     private boolean isConnected = false;
 
     // References to other application parts
-    private final Stage stage;
     private final Main mainApp;
 
     /**
@@ -41,7 +40,6 @@ public class Dash {
         this.view.loadNodes();
         this.service = new DashService(new IO());
         this.mainApp = m;
-        this.stage = ps;
 
         // Load config, apply to UI, and register all event handlers
         this.config = service.readConfig();
@@ -66,7 +64,6 @@ public class Dash {
         this.view = ui;
         this.service = service;
         this.mainApp = m;
-        this.stage = ps;
 
         // Load config from the (mock) service
         this.config = service.readConfig();
@@ -131,7 +128,7 @@ public class Dash {
      * Loads node-specific UI elements, like the startup toggle.
      */
     private void loadNodes() {
-        if (service.getOS() == DashService.os.windows) {
+        if (OS.getOS() == OS.WINDOWS) {
             view.runOnStartupToggleButton.setSelected(service.checkIfRunningOnStartup());
         } else {
             view.runOnStartupToggleButton.setDisable(true);
@@ -360,6 +357,31 @@ public class Dash {
                 if (s[0].equals(config.get("AVAILABLE_RAM_NAME"))) config.put("AVAILABLE_RAM", s[2]);
             }
         }
+    }
+
+    /**
+     * Handles application shutdown logic.
+     * Attempts to gracefully disconnect from the server.
+     */
+    public void shutdown() {
+        if (isConnected) {
+            // Run disconnection on a background thread.
+            // This avoids blocking the JavaFX Application Thread.
+            new Thread(() -> {
+                try {
+                    // Send a final "QUIT" message (based on original Main.java logic)
+                    service.sendData("QUIT");
+                    // Give a brief moment for the message to send
+                    Thread.sleep(200);
+                    service.disconnectSocket();
+                } catch (Exception e) {
+                    // Suppress errors during shutdown
+                    // e.printStackTrace();
+                }
+            }).start();
+        }
+        // Immediately return. Platform.exit() will be called in Main.
+        // The daemon update thread will be killed by Platform.exit().
     }
 
     // Helper methods for showing dialogs
