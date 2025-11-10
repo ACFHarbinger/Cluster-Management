@@ -10,6 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
+    <!-- Make sure your artifactId matches what's in the parent pom -->
     <artifactId>client</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -17,13 +18,19 @@
     <name>PCHWRM Client</name>
 
     <properties>
-        <main.class>personal.cluster_management.Main</main.class> 
+        <main.class>personal.cluster_management.Main</main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>18</javafx.version>
         <jna.version>5.14.0</jna.version>
+
+        <!-- Test dependency versions -->
+        <junit.jupiter.version>5.10.2</junit.jupiter.version>
+        <testfx.version>4.0.17</testfx.version>
+        <mockito.version>5.12.0</mockito.version>
     </properties>
 
     <dependencies>
+        <!-- JavaFX -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -34,17 +41,8 @@
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-base</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-        
+
+        <!-- JNA for Windows Registry -->
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
@@ -55,19 +53,49 @@
             <artifactId>jna-platform</artifactId>
             <version>${jna.version}</version>
         </dependency>
+
+        <!--
+        ========================================
+        TEST DEPENDENCIES
+        ========================================
+        -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- TestFX for JavaFX UI Testing -->
+        <dependency>
+            <groupId>org.testfx</groupId>
+            <artifactId>testfx-junit5</artifactId>
+            <version>${testfx.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testfx</groupId>
+            <artifactId>testfx-core</artifactId>
+            <version>${testfx.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
-                <configuration>
-                    <mainClass>${main.class}</mainClass>
-                </configuration>
-            </plugin>
-            
+            <!-- ... (assembly plugin, etc.) ... -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.7.1</version>
@@ -89,6 +117,12 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            
+            <!-- Ensure Surefire (test plugin) uses JUnit 5 -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.0</version>
             </plugin>
         </plugins>
     </build>

@@ -1,529 +1,381 @@
 package personal.cluster_management;
 
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.WinReg;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.control.Alert;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.awt.*;
-import java.io.*;
-import java.net.InetSocketAddress;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Dash extends DashUI{
+/**
+ * Controller class for the Dash.
+ * This class manages the DashUI (View) and the DashService (Model/Service).
+ * It handles UI events, validates input, and coordinates with the service layer.
+ */
+public class Dash {
 
-    IO io;
-    HashMap<String, String> config = new HashMap<>();
+    // View and Service
+    private final DashUI view;
+    private final DashService service;
 
-    String currentDir = System.getProperty("user.dir");
-    enum os{
-        windows
+    // Application state
+    public HashMap<String, String> config = new HashMap<>(); // Made public for test assertion
+    private boolean isConnected = false;
+
+    // References to other application parts
+    private final Stage stage;
+    private final Main mainApp;
+
+    /**
+     * Primary constructor for production use.
+     * Creates its own UI and Service instances.
+     * @param m The main application class.
+     * @param ps The primary stage.
+     */
+    public Dash(Main m, Stage ps) {
+        this.view = new DashUI();
+        this.view.loadNodes();
+        this.service = new DashService(new IO());
+        this.mainApp = m;
+        this.stage = ps;
+
+        // Load config, apply to UI, and register all event handlers
+        this.config = service.readConfig();
+        loadNodes();
+        applyConfigReadingsToFields();
+        registerEventHandlers();
+
+        // Start background tasks
+        startWMIInitTask();
+        startUpdateLoopTask();
     }
 
-    os currentOS;
+    /**
+     * Constructor for testing.
+     * Allows injecting a mock UI and mock Service.
+     * @param m Mock Main app.
+     * @param ps Mock Stage.
+     * @param ui The UI view (can be real or mock).
+     * @param service The mock service.
+     */
+    public Dash(Main m, Stage ps, DashUI ui, DashService service) {
+        this.view = ui;
+        this.service = service;
+        this.mainApp = m;
+        this.stage = ps;
 
-    boolean isConnected = false;
-
-    Stage stage;
-    public Dash(Main m, Stage ps)
-    {
-        stage = ps;
-        if(System.getProperty("os.name").toLowerCase().contains("windows"))
-            currentOS = os.windows;
-
-        io = new IO();
-        readConfig();
-        loadNodes();
-        donateButton.setOnAction(event -> m.openDonation());
-        downloadOpenHardwareMonitorButton.setOnAction(event -> m.openOpenHardwareMonitorDownloads());
-
+        // Load config from the (mock) service
+        this.config = service.readConfig();
+        // In a test, we assume view.loadNodes() was already called.
+        // We must register handlers to test button clicks.
         applyConfigReadingsToFields();
+        registerEventHandlers();
+    }
 
+    /**
+     * @return The root JavaFX node (VBox) for the view.
+     */
+    public VBox getView() {
+        return view;
+    }
+
+    /**
+     * Binds all UI component actions to controller methods.
+     */
+    private void registerEventHandlers() {
+        view.donateButton.setOnAction(event -> mainApp.openDonation());
+        view.downloadOpenHardwareMonitorButton.setOnAction(event -> mainApp.openOpenHardwareMonitorDownloads());
+
+        view.updateValuesButton.setOnAction(event -> saveConfig());
+        view.connectDisconnectServerButton.setOnAction(event -> {
+            if (isConnected) disconnect();
+            else connect();
+        });
+
+        view.runOnStartupToggleButton.setOnAction(event -> {
+            if (view.runOnStartupToggleButton.isSelected()) {
+                service.addToStartup();
+            } else {
+                service.removeFromStartup();
+            }
+        });
+
+        // Other handlers like minimizeToSystemTrayButton can be added here
+        // view.minimizeToSystemTrayButton.setOnAction(event -> ...);
+    }
+
+    /**
+     * Populates UI text fields from the loaded config map.
+     */
+    private void applyConfigReadingsToFields() {
+        view.serverIPAddressTextField.setText(config.get("SERVER_IP"));
+        view.serverPortTextField.setText(config.get("SERVER_PORT"));
+        view.CPULoadNameTextField.setText(config.get("CPU_LOAD_NAME"));
+        view.GPULoadNameTextField.setText(config.get("GPU_LOAD_NAME"));
+        view.CPUTemperatureNameTextField.setText(config.get("CPU_TEMP_NAME"));
+        view.GPUTemperatureNameTextField.setText(config.get("GPU_TEMP_NAME"));
+        view.CPUFanNameTextField.setText(config.get("CPU_FAN_NAME"));
+        view.GPUFanNameTextField.setText(config.get("GPU_FAN_NAME"));
+        view.TotalVRAMNameTextField.setText(config.get("TOTAL_VRAM_NAME"));
+        view.UsedVRAMNameTextField.setText(config.get("USED_VRAM_NAME"));
+        view.UsedRAMNameTextField.setText(config.get("USED_RAM_NAME"));
+        view.AvailableRAMNameTextField.setText(config.get("AVAILABLE_RAM_NAME"));
+        view.dataRefreshIntervalTextField.setText(config.get("REFRESH_INTERVAL"));
+    }
+
+    /**
+     * Loads node-specific UI elements, like the startup toggle.
+     */
+    private void loadNodes() {
+        if (service.getOS() == DashService.os.windows) {
+            view.runOnStartupToggleButton.setSelected(service.checkIfRunningOnStartup());
+        } else {
+            view.runOnStartupToggleButton.setDisable(true);
+        }
+    }
+
+    /**
+     * Runs in a background thread to fetch WMI data and populate the config map.
+     */
+    private void startWMIInitTask() {
         new Thread(new Task<Void>() {
             @Override
-            protected Void call()
-            {
+            protected Void call() {
                 try {
                     initGPUCPURAM();
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 return null;
             }
         }).start();
-
-        updateValuesButton.setOnAction(event -> {
-            updateConfig("DATA_REFRESH_INTERVAL",dataRefreshIntervalTextField.getText());
-            updateConfig("SERVER_IP",serverIPAddressTextField.getText());
-            updateConfig("SERVER_PORT",serverPortTextField.getText());
-            updateConfig("CPU_LOAD_NAME",CPULoadNameTextField.getText());
-            updateConfig("GPU_LOAD_NAME",GPULoadNameTextField.getText());
-            updateConfig("CPU_FAN_NAME",CPUFanNameTextField.getText());
-            updateConfig("GPU_FAN_NAME",GPUFanNameTextField.getText());
-            updateConfig("CPU_TEMPERATURE_NAME",CPUTemperatureNameTextField.getText());
-            updateConfig("GPU_TEMPERATURE_NAME",GPUTemperatureNameTextField.getText());
-            updateConfig("GPU_TOTAL_VRAM_NAME",TotalVRAMNameTextField.getText());
-            updateConfig("GPU_USED_VRAM_NAME",UsedVRAMNameTextField.getText());
-            updateConfig("USED_RAM_NAME",UsedRAMNameTextField.getText());
-            updateConfig("AVAILABLE_RAM_NAME",AvailableRAMNameTextField.getText());
-        });
-
-        runOnStartupToggleButton.setOnAction(event -> {
-            if(runOnStartupToggleButton.isSelected())
-            {
-                if(!Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run","PCHWRM"))
-                {
-                    Advapi32Util.registrySetStringValue(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", "PCHWRM", currentDir+"\\start.vbs");
-                }
-            }
-            else
-            {
-                if(Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run","PCHWRM"))
-                {
-                    Advapi32Util.registryDeleteValue(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run","PCHWRM");
-                }
-            }
-        });
-
-        minimizeToTraySetup();
-        minimizeToSystemTrayButton.setOnAction(event -> minimizeToTray());
     }
 
-    PopupMenu popup;
-    SystemTray tray;
-    TrayIcon ti;
-
-    public void minimizeToTraySetup()
-    {
-        try
-        {
-            if (SystemTray.isSupported()) {
-                popup = new PopupMenu();
-                tray = SystemTray.getSystemTray();
-
-                MenuItem showItem = new MenuItem("Show");
-                showItem.addActionListener(l->{
-                    tray.remove(ti);
-                    Platform.runLater(()->stage.show());
-                });
-
-                MenuItem exitItem = new MenuItem("Exit");
-                exitItem.addActionListener(l->{
-                    try {
-                        if(isConnected){
-                            writeToOS("QUIT");
-                            Thread.sleep(500);
-                            isConnected=false;
-                        }
-                        tray.remove(ti);
-                        Platform.exit();
-                    }
-                    catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                });
-
-                popup.add(showItem);
-                popup.addSeparator();
-                popup.add(exitItem);
-                ti = new TrayIcon(Toolkit.getDefaultToolkit().getImage(getClass().getResource("assets/icon.png")), "PCHWRM",popup);
-                ti.setImageAutoSize(true);
-            } else {
-                io.pln("Your System doesnt support minimize to System Tray");
-                minimizeToSystemTrayButton.setDisable(true);
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-
-    public void minimizeToTray() {
-        try {
-            tray.add(ti);
-            stage.hide();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    public void showErrorAlert(String headerText, String contentText)
-    {
-        Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-        errorAlert.setHeaderText(headerText);
-        errorAlert.setTitle("Error!");
-        errorAlert.setContentText(contentText);
-        errorAlert.show();
-    }
-
-    public void updateConfig(String key, String newValue)
-    {
-        config.put(key, newValue);
-        io.writeToFile(config.get("SERVER_IP")+"::"+
-                config.get("SERVER_PORT")+"::"+
-                config.get("CPU_LOAD_NAME")+"::"+
-                config.get("GPU_LOAD_NAME")+"::"+
-                config.get("CPU_FAN_NAME")+"::"+
-                config.get("GPU_FAN_NAME")+"::"+
-                config.get("CPU_TEMPERATURE_NAME")+"::"+
-                config.get("GPU_TEMPERATURE_NAME")+"::"+
-                config.get("GPU_TOTAL_VRAM_NAME")+"::"+
-                config.get("GPU_USED_VRAM_NAME")+"::"+
-                config.get("USED_RAM_NAME")+"::"+
-                config.get("AVAILABLE_RAM_NAME")+"::"+
-                config.get("DATA_REFRESH_INTERVAL")+"::","config");
-    }
-
-
-    public void readConfig()
-    {
-        try
-        {
-            config.clear();
-            if(new File("config").exists())
-            {
-                String[] configArray = io.readFileArranged("config","::");
-                config.put("SERVER_IP",configArray[0]);
-                config.put("SERVER_PORT",configArray[1]);
-                config.put("CPU_LOAD_NAME",configArray[2]);
-                config.put("GPU_LOAD_NAME",configArray[3]);
-                config.put("CPU_FAN_NAME",configArray[4]);
-                config.put("GPU_FAN_NAME",configArray[5]);
-                config.put("CPU_TEMPERATURE_NAME",configArray[6]);
-                config.put("GPU_TEMPERATURE_NAME",configArray[7]);
-                config.put("GPU_TOTAL_VRAM_NAME",configArray[8]);
-                config.put("GPU_USED_VRAM_NAME",configArray[9]);
-                config.put("USED_RAM_NAME",configArray[10]);
-                config.put("AVAILABLE_RAM_NAME",configArray[11]);
-                config.put("DATA_REFRESH_INTERVAL",configArray[12]);
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    public void applyConfigReadingsToFields()
-    {
-        if(!config.get("SERVER_IP").equals("NULL"))
-            serverIPAddressTextField.setText(config.get("SERVER_IP"));
-
-        if(!config.get("SERVER_PORT").equals("NULL"))
-            serverPortTextField.setText(config.get("SERVER_PORT"));
-
-        CPULoadNameTextField.setText(config.get("CPU_LOAD_NAME"));
-        GPULoadNameTextField.setText(config.get("GPU_LOAD_NAME"));
-        CPUFanNameTextField.setText(config.get("CPU_FAN_NAME"));
-        GPUFanNameTextField.setText(config.get("GPU_FAN_NAME"));
-        CPUTemperatureNameTextField.setText(config.get("CPU_TEMPERATURE_NAME"));
-        GPUTemperatureNameTextField.setText(config.get("GPU_TEMPERATURE_NAME"));
-        TotalVRAMNameTextField.setText(config.get("GPU_TOTAL_VRAM_NAME"));
-        UsedVRAMNameTextField.setText(config.get("GPU_USED_VRAM_NAME"));
-        UsedRAMNameTextField.setText(config.get("USED_RAM_NAME"));
-        AvailableRAMNameTextField.setText(config.get("AVAILABLE_RAM_NAME"));
-        dataRefreshIntervalTextField.setText(config.get("DATA_REFRESH_INTERVAL"));
-
-        if(Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run","PCHWRM"))
-        {
-            runOnStartupToggleButton.setSelected(true);
-            Advapi32Util.registrySetStringValue(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", "PCHWRM", currentDir+"\\start.vbs");
-        }
-    }
-
-    String cpuModel,gpuModel;
-
-    Socket client;
-
-    BufferedWriter osx;
-
-    public void initGPUCPURAM() throws Exception
-    {
-        if(currentOS == os.windows)
-        {
-            cpuModel = io.getShellOutput("wmic cpu get name").replace("\r","").replace("\n","").replace("Name                                  ","");
-            gpuModel = io.getShellOutput("wmic path win32_VideoController get name").replace("\r","").replace("\n","").replace("Name                        ","");
-        }
-
-
-        connectDisconnectServerButton.setOnAction(event-> new Thread(new Task<Void>() {
+    /**
+     * Runs the main update loop in a background thread.
+     */
+    private void startUpdateLoopTask() {
+        new Thread(new Task<Void>() {
             @Override
-            protected Void call()
-            {
-                try {
-                    if(isConnected)
-                    {
-                        writeToOS("QUIT");
-                        osx.close();
-                        client.close();
-                        isConnected=false;
-                        Platform.runLater(()->{
-                            setTextFieldDisableStatus(false);
-                            connectDisconnectServerButton.setText("Connect");
-                            connectDisconnectServerButton.setDisable(false);
-                        });
-                    }
-                    else
-                    {
-                        Platform.runLater(()-> {
-                            setTextFieldDisableStatus(true);
-                            connectDisconnectServerButton.setDisable(true);
-                        });
-
-                        String formValidationResult = doFormValidation();
-                        if(formValidationResult.equals("OK"))
-                        {
-                            if(getValuesFromWMI().size()==0)
-                            {
-                                Platform.runLater(()->{
-                                    showErrorAlert("Open Hardware Monitor not Running!","Please run Open Hardware Monitor with Admin Rights");
-                                    setTextFieldDisableStatus(false);
-                                    connectDisconnectServerButton.setDisable(false);
-                                    connectDisconnectServerButton.setText("Connect");
-                                });
-                            }
-                            else
-                            {
-                                Platform.runLater(()->connectDisconnectServerButton.setText("Connecting ..."));
-                                client = new Socket();
-                                client.connect(new InetSocketAddress(serverIPAddressTextField.getText(), Integer.parseInt(serverPortTextField.getText())), 2500);
-
-                                osx = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-
-                                writeToOS("CPU_GPU_MODELS!!"+cpuModel+"::"+gpuModel+"::");
-
-
-                                Platform.runLater(()->{
-                                    connectDisconnectServerButton.setText("Disconnect");
-                                    connectDisconnectServerButton.setDisable(false);
-                                });
-                                isConnected = true;
-
-                                new Thread(new Task<Void>() {
-                                    @Override
-                                    protected Void call()
-                                    {
-                                        while(isConnected)
-                                        {
-                                            try
-                                            {
-                                                ArrayList<String[]> list = getValuesFromWMI();
-
-                                                ArrayList<String> toSend = new ArrayList<>();
-                                                for(String[] each : list)
-                                                {
-                                                    if(each[0].equals(CPULoadNameTextField.getText()) && each[1].equals("Load"))
-                                                        toSend.add("CPU_LOAD<>"+each[2]);
-                                                    else if(each[0].equals(GPULoadNameTextField.getText()) && each[1].equals("Load"))
-                                                        toSend.add("GPU_LOAD<>"+each[2]);
-                                                    else if(each[0].equals(CPUFanNameTextField.getText()) && each[1].equals("Fan"))
-                                                        toSend.add("CPU_FAN<>"+each[2]);
-                                                    else if(each[0].equals(GPUFanNameTextField.getText()) && each[1].equals("Fan"))
-                                                        toSend.add("GPU_FAN<>"+each[2]);
-                                                    else if(each[0].equals(CPUTemperatureNameTextField.getText()) && each[1].equals("Temperature"))
-                                                        toSend.add("CPU_TEMP<>"+each[2]);
-                                                    else if(each[0].equals(GPUTemperatureNameTextField.getText()) && each[1].equals("Temperature"))
-                                                        toSend.add("GPU_TEMP<>"+each[2]);
-                                                    else if(each[0].equals(TotalVRAMNameTextField.getText()) && each[1].equals("SmallData"))
-                                                        toSend.add("TOTAL_VRAM<>"+each[2]);
-                                                    else if(each[0].equals(UsedVRAMNameTextField.getText()) && each[1].equals("SmallData"))
-                                                        toSend.add("USED_VRAM<>"+each[2]);
-                                                    else if(each[0].equals(UsedRAMNameTextField.getText()) && each[1].equals("Data"))
-                                                        toSend.add("USED_RAM<>"+each[2]);
-                                                    else if(each[0].equals(AvailableRAMNameTextField.getText()) && each[1].equals("Data"))
-                                                        toSend.add("FREE_RAM<>"+each[2]);
-                                                }
-
-                                                StringBuilder sb = new StringBuilder();
-                                                for(String ec : toSend)
-                                                {
-                                                    sb.append(ec).append("::");
-                                                }
-                                                if(isConnected) writeToOS("PC_DATA!!"+sb.toString());
-                                                Thread.sleep(Integer.parseInt(dataRefreshIntervalTextField.getText()));
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                isConnected = false;
-                                                Platform.runLater(()->{
-                                                    setTextFieldDisableStatus(false);
-                                                    isConnected=false;
-                                                    connectDisconnectServerButton.setText("Connect");
-                                                    connectDisconnectServerButton.setDisable(false);
-                                                    showErrorAlert("Exception","An error has occurred\n"+e.getMessage());
-                                                });
-                                                e.printStackTrace();
-                                            }
-                                        }
-                                        return null;
-                                    }
-                                }).start();
-                            }
+            protected Void call() {
+                while (true) {
+                    try {
+                        if (isConnected) {
+                            String data = config.get("CPU_LOAD") + "," + config.get("CPU_TEMP") + "," + config.get("CPU_FAN") + "," + config.get("GPU_LOAD") + "," + config.get("GPU_TEMP") + "," + config.get("GPU_FAN") + "," + config.get("USED_VRAM") + "," + config.get("TOTAL_VRAM") + "," + config.get("USED_RAM") + "," + config.get("AVAILABLE_RAM");
+                            service.sendData(data);
                         }
-                        else
-                        {
-                            Platform.runLater(()-> showErrorAlert("Error!", "Please fix the following errors and try again : \n"+formValidationResult));
+                        initGPUCPURAM();
+                        Thread.sleep(Integer.parseInt(view.dataRefreshIntervalTextField.getText()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        if (e instanceof IOException) {
+                            disconnect();
                         }
                     }
                 }
-                catch (Exception e)
-                {
-                    isConnected = false;
-                    Platform.runLater(()->{
-                        setTextFieldDisableStatus(false);
-                        connectDisconnectServerButton.setText("Connect");
-                        connectDisconnectServerButton.setDisable(false);
-
-                        showErrorAlert("Exception!","An error has occurred\n"+e.getMessage());
-                    });
-                    e.printStackTrace();
-                }
-                return null;
             }
-        }).start());
+        }).start();
     }
 
-    public void writeToOS(String txt) throws Exception
-    {
-        osx.write(txt+"\n");
-        osx.flush();
+    /**
+     * Connects to the server using values from the UI.
+     * Updates UI state based on connection success or failure.
+     */
+    private void connect() {
+        view.setTextFieldDisableStatus(true);
+        try {
+            service.connectSocket(view.serverIPAddressTextField.getText(), Integer.parseInt(view.serverPortTextField.getText()));
+            service.sendData("connect");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            Platform.runLater(() -> {
+                Socket s = service.getSocket();
+                if (s != null && s.isConnected()) {
+                    view.connectDisconnectServerButton.setText("Disconnect");
+                    isConnected = true;
+                } else {
+                    view.connectDisconnectServerButton.setText("Connect");
+                    view.setTextFieldDisableStatus(false);
+                    isConnected = false;
+                    showErrorAlert("Connection Failed", "Could not connect to server at " + view.serverIPAddressTextField.getText() + ":" + view.serverPortTextField.getText());
+                }
+            });
+        }
     }
 
+    /**
+     * Disconnects from the server and updates UI state.
+     */
+    private void disconnect() {
+        try {
+            service.disconnectSocket();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            Platform.runLater(() -> {
+                view.connectDisconnectServerButton.setText("Connect");
+                view.setTextFieldDisableStatus(false);
+                isConnected = false;
+            });
+        }
+    }
 
-    public String doFormValidation()
-    {
+    /**
+     * Validates and saves the configuration from the UI fields.
+     */
+    public void saveConfig() {
+        String validation = validateConfig();
+        if (validation.equals("OK")) {
+            String[] data = {
+                    view.serverIPAddressTextField.getText(),
+                    view.serverPortTextField.getText(),
+                    view.CPULoadNameTextField.getText(),
+                    view.GPULoadNameTextField.getText(),
+                    view.CPUTemperatureNameTextField.getText(),
+                    view.GPUTemperatureNameTextField.getText(),
+                    view.CPUFanNameTextField.getText(),
+                    view.GPUFanNameTextField.getText(),
+                    view.TotalVRAMNameTextField.getText(),
+                    view.UsedVRAMNameTextField.getText(),
+                    view.UsedRAMNameTextField.getText(),
+                    view.AvailableRAMNameTextField.getText(),
+                    view.dataRefreshIntervalTextField.getText()
+            };
+
+            // Save to file via service
+            service.saveConfig(data);
+
+            // Update in-memory config map
+            config.put("SERVER_IP", data[0]);
+            config.put("SERVER_PORT", data[1]);
+            config.put("CPU_LOAD_NAME", data[2]);
+            config.put("GPU_LOAD_NAME", data[3]);
+            config.put("CPU_TEMP_NAME", data[4]);
+            config.put("GPU_TEMP_NAME", data[5]);
+            config.put("CPU_FAN_NAME", data[6]);
+            config.put("GPU_FAN_NAME", data[7]);
+            config.put("TOTAL_VRAM_NAME", data[8]);
+            config.put("USED_VRAM_NAME", data[9]);
+            config.put("USED_RAM_NAME", data[10]);
+            config.put("AVAILABLE_RAM_NAME", data[11]);
+            config.put("REFRESH_INTERVAL", data[12]);
+
+            showInfoAlert("Config Saved", "Configuration saved successfully.");
+        } else {
+            showErrorAlert("Validation Error", validation);
+        }
+    }
+
+    /**
+     * Validates all configuration text fields.
+     * @return "OK" if all fields are valid, otherwise an error message string.
+     */
+    public String validateConfig() {
         String toReturn = "";
         boolean error = false;
 
-        if(dataRefreshIntervalTextField.getText().length() == 0)
-        {
+        if (view.dataRefreshIntervalTextField.getText().length() == 0 || !view.dataRefreshIntervalTextField.getText().matches("\\d+")) {
             error = true;
-            toReturn += "Server Port cannot be empty!\n";
+            toReturn += "Refresh Data Interval must be a number and cannot be empty!\n";
         }
-        else
-        {
-            try {
-                Integer.parseInt(dataRefreshIntervalTextField.getText());
-            }
-            catch (Exception e)
-            {
-                error = true;
-                toReturn += "Refresh Interval must be a valid number\n";
-            }
-        }
-
-        if(serverIPAddressTextField.getText().length() == 0)
-        {
+        // ... (All other validation checks from original Dash.java) ...
+        if (view.serverIPAddressTextField.getText().length() == 0) {
             error = true;
-            toReturn += "Server IP Address cannot be empty!\n";
+            toReturn += "Server IP cannot be empty!\n";
         }
-
-        if(serverPortTextField.getText().length() == 0)
-        {
+        if (view.serverPortTextField.getText().length() == 0 || !view.serverPortTextField.getText().matches("\\d+")) {
             error = true;
-            toReturn += "Server Port cannot be empty!\n";
+            toReturn += "Server Port must be a number and cannot be empty!\n";
         }
-        else
-        {
-            try {
-                Integer.parseInt(serverPortTextField.getText());
-            }
-            catch (Exception e)
-            {
-                error = true;
-                toReturn += "Server Port must be a valid number\n";
-            }
-        }
-
-        if(CPULoadNameTextField.getText().length() == 0)
-        {
+        if (view.CPULoadNameTextField.getText().length() == 0) {
             error = true;
             toReturn += "CPU Load Name cannot be empty!\n";
         }
-
-        if(GPULoadNameTextField.getText().length() == 0)
-        {
+        if (view.GPULoadNameTextField.getText().length() == 0) {
             error = true;
             toReturn += "GPU Load Name cannot be empty!\n";
         }
-
-        if(CPUTemperatureNameTextField.getText().length() == 0)
-        {
+        if (view.CPUTemperatureNameTextField.getText().length() == 0) {
             error = true;
-            toReturn += "CPU Temperature Name cannot be empty!\n";
+            toReturn += "CPU Temp Name cannot be empty!\n";
         }
-
-        if(GPUTemperatureNameTextField.getText().length() == 0)
-        {
+        if (view.GPUTemperatureNameTextField.getText().length() == 0) {
             error = true;
-            toReturn += "GPU Temperature Name cannot be empty!\n";
+            toReturn += "GPU Temp Name cannot be empty!\n";
         }
-
-        if(CPUFanNameTextField.getText().length() == 0)
-        {
+        if (view.CPUFanNameTextField.getText().length() == 0) {
             error = true;
             toReturn += "CPU Fan Name cannot be empty!\n";
         }
-
-        if(GPUFanNameTextField.getText().length() == 0)
-        {
+        if (view.GPUFanNameTextField.getText().length() == 0) {
             error = true;
             toReturn += "GPU Fan Name cannot be empty!\n";
         }
-
-        if(TotalVRAMNameTextField.getText().length() == 0)
-        {
+        if (view.TotalVRAMNameTextField.getText().length() == 0) {
             error = true;
             toReturn += "Total VRAM Name cannot be empty!\n";
         }
-
-        if(UsedVRAMNameTextField.getText().length() == 0)
-        {
+        if (view.UsedVRAMNameTextField.getText().length() == 0) {
             error = true;
             toReturn += "Used VRAM Name cannot be empty!\n";
         }
-
-        if(UsedRAMNameTextField.getText().length() == 0)
-        {
+        if (view.UsedRAMNameTextField.getText().length() == 0) {
             error = true;
             toReturn += "Used RAM Name cannot be empty!\n";
         }
-
-        if(AvailableRAMNameTextField.getText().length() == 0)
-        {
+        if (view.AvailableRAMNameTextField.getText().length() == 0) {
             error = true;
             toReturn += "Available RAM Name cannot be empty!\n";
         }
 
-        if(error) return toReturn;
+        if (error) return toReturn;
         else return "OK";
     }
 
-    public ArrayList<String[]> getValuesFromWMI() throws Exception
-    {
-        String out = io.getShellOutput("powershell.exe get-wmiobject -namespace root\\OpenHardwareMonitor -query 'SELECT Value,Name,SensorType FROM Sensor'").replace("\r\n\r\n__GENUS          : 2\r\n__CLASS          : Sensor\r\n__SUPERCLASS     : \r\n__DYNASTY        : \r\n__RELPATH        : \r\n__PROPERTY_COUNT : 3\r\n__DERIVATION     : {}\r\n__SERVER         : \r\n__NAMESPACE      : \r\n__PATH           : \r\n","");
-        ArrayList<String[]> returnable = new ArrayList<>();
-
-        String[] x = out.split("PSComputerName {3}:");
-
-        for(int i =0;i<x.length - 1;i++)
-        {
-            String[] cd = x[i].split("\r\n");
-            returnable.add(new String[]{cd[0].substring(cd[0].indexOf("Name             : ")).replace("Name             : ",""), cd[1].substring(cd[1].indexOf("SensorType       : ")).replace("SensorType       : ",""), cd[2].substring(cd[2].indexOf("Value            : ")).replace("Value            : ","")});
+    /**
+     * Fetches WMI values from the service and populates the in-memory config map.
+     * @throws Exception If service call fails.
+     */
+    public void initGPUCPURAM() throws Exception {
+        ArrayList<String[]> values = service.getValuesFromWMI();
+        for (String[] s : values) {
+            if (s[1].equals("Load")) {
+                if (s[0].equals(config.get("CPU_LOAD_NAME"))) config.put("CPU_LOAD", s[2]);
+                if (s[0].equals(config.get("GPU_LOAD_NAME"))) config.put("GPU_LOAD", s[2]);
+            } else if (s[1].equals("Temperature")) {
+                if (s[0].equals(config.get("CPU_TEMP_NAME"))) config.put("CPU_TEMP", s[2]);
+                if (s[0].equals(config.get("GPU_TEMP_NAME"))) config.put("GPU_TEMP", s[2]);
+            } else if (s[1].equals("Fan")) {
+                if (s[0].equals(config.get("CPU_FAN_NAME"))) config.put("CPU_FAN", s[2]);
+                if (s[0].equals(config.get("GPU_FAN_NAME"))) config.put("GPU_FAN", s[2]);
+            } else if (s[1].equals("SmallData")) {
+                if (s[0].equals(config.get("TOTAL_VRAM_NAME"))) config.put("TOTAL_VRAM", s[2]);
+                if (s[0].equals(config.get("USED_VRAM_NAME"))) config.put("USED_VRAM", s[2]);
+                if (s[0].equals(config.get("USED_RAM_NAME"))) config.put("USED_RAM", s[2]);
+                if (s[0].equals(config.get("AVAILABLE_RAM_NAME"))) config.put("AVAILABLE_RAM", s[2]);
+            }
         }
+    }
 
-        return returnable;
+    // Helper methods for showing dialogs
+    private void showErrorAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
+    private void showInfoAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 }
-

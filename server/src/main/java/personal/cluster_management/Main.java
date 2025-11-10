@@ -8,7 +8,8 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage)
     {
-        Monitor m = new Monitor(new IO());
+        IO io = new IO();
+        Monitor m = new Monitor(io);
         Scene s = new Scene(m);
         primaryStage.setScene(s);
         primaryStage.show();

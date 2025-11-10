@@ -11,13 +11,28 @@ public class Main extends Application {
     public void start(Stage primaryStage)
     {
         Platform.setImplicitExit(false);
-        Dash d = new Dash(this, primaryStage);
+        
+        /**
+         * MODIFICATION:
+         * 1. Create the real IO object
+         * 2. Inject the real IO object into the Dash constructor
+         */
+        IO io = new IO();
+        Dash d = new Dash(this, primaryStage, io);
+        
         Scene s = new Scene(d);
         primaryStage.setScene(s);
         primaryStage.getIcons().add(new Image(getClass().getResource("assets/icon.png").toExternalForm()));
         primaryStage.setResizable(false);
         primaryStage.setTitle("PCHWRM Client By github.com/dubbadhar <3");
         primaryStage.show();
+
+        /**
+         * MODIFICATION:
+         * 3. Start the hardware init thread *after* the UI is shown
+         */
+        d.startHardwareInitThread();
+
         primaryStage.setOnCloseRequest(event->{
             try
             {
@@ -37,7 +52,7 @@ public class Main extends Application {
 
     public void openDonation()
     {
-        getHostServices().showDocument("https://www.paypal.me/ladiesman6969");
+        getHostServices().showDocument("https.www.paypal.me/ladiesman6969");
     }
 
     public void openOpenHardwareMonitorDownloads()
