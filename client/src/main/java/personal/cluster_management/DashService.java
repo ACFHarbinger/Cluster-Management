@@ -17,7 +17,7 @@ import java.util.HashMap;
 public class DashService implements DashServiceInterface {
 
     private final IO io;
-    private final OS currentOS;
+    private final OSEnum currentOS;
     private final String currentDir = System.getProperty("user.dir");
 
     /**
@@ -26,7 +26,7 @@ public class DashService implements DashServiceInterface {
      */
     public DashService(IO io) {
         this.io = io;
-        this.currentOS = OS.getOS();
+        this.currentOS = OSEnum.getOS();
     }
 
     /**
@@ -98,7 +98,7 @@ public class DashService implements DashServiceInterface {
      * @return true if the startup entry exists, false otherwise.
      */
     public boolean checkIfRunningOnStartup() {
-        if (currentOS == OS.WINDOWS) {
+        if (currentOS == OSEnum.WINDOWS) {
             return Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", "ClusterManagement");
         }
         return false;
@@ -108,7 +108,7 @@ public class DashService implements DashServiceInterface {
      * Adds the application to the Windows Registry to run on startup.
      */
     public void addToStartup() {
-        if (currentOS == OS.WINDOWS) {
+        if (currentOS == OSEnum.WINDOWS) {
             Advapi32Util.registrySetStringValue(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", "ClusterManagement", "\"" + currentDir + File.separator + "ClusterManagement.exe" + "\"");
         }
     }
@@ -117,7 +117,7 @@ public class DashService implements DashServiceInterface {
      * Removes the application from the Windows Registry startup items.
      */
     public void removeFromStartup() {
-        if (currentOS == OS.WINDOWS) {
+        if (currentOS == OSEnum.WINDOWS) {
             Advapi32Util.registryDeleteValue(WinReg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", "ClusterManagement");
         }
     }

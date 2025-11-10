@@ -64,7 +64,7 @@ class DashTest {
 
         // Mock the service's readConfig call
         when(mockService.readConfig()).thenReturn(fakeConfig);
-        when(mockService.getOS()).thenReturn(DashService.os.windows);
+        when(OSEnum.getOS()).thenReturn(OSEnum.WINDOWS);
 
         // We need to initialize the UI on the JavaFX thread
         CountDownLatch latch = new CountDownLatch(1);

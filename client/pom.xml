@@ -20,7 +20,7 @@
     <properties>
         <main.class>personal.cluster_management.Main</main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javafx.version>18</javafx.version>
+        <javafx.version>21</javafx.version>
         <jna.version>5.14.0</jna.version>
 
         <!-- Test dependency versions -->
@@ -95,6 +95,15 @@
 
     <build>
         <plugins>
+            <!-- Configure compiler plugin to use Java 21 release -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>21</release>
+                </configuration>
+            </plugin>
             <!-- ... (assembly plugin, etc.) ... -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>

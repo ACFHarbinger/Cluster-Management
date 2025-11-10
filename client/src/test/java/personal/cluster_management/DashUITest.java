@@ -55,7 +55,7 @@ public class DashUITest {
 
         // Mock the service to return a default empty config
         when(mockService.readConfig()).thenReturn(new HashMap<>());
-        when(mockService.getOS()).thenReturn(DashService.os.windows);
+        when(OSEnum.getOS()).thenReturn(OSEnum.WINDOWS);
 
         // We need to initialize the UI on the JavaFX thread
         // No need for CountDownLatch, @Start handles it.

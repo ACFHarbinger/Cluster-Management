@@ -2,7 +2,7 @@ package personal.cluster_management;
 
 import java.io.*;
 
-public class IO {
+public class IO implements IOInterface {
 
     public void pln(String txt)
     {

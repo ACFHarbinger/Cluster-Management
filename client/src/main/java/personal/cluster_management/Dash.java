@@ -128,7 +128,7 @@ public class Dash implements DashInterface {
      * Loads node-specific UI elements, like the startup toggle.
      */
     private void loadNodes() {
-        if (OS.getOS() == OS.WINDOWS) {
+        if (OSEnum.getOS() == OSEnum.WINDOWS) {
             view.runOnStartupToggleButton.setSelected(service.checkIfRunningOnStartup());
         } else {
             view.runOnStartupToggleButton.setDisable(true);

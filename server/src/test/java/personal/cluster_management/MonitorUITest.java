@@ -10,9 +10,6 @@ import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
 import org.testfx.matcher.control.LabeledMatchers;
-import org.testfx.matcher.layout.NodeMatchers;
-
-import static org.testfx.matcher.layout.NodeMatchers.isVisible;
 
 // Use TestFX's extension to launch JavaFX applications
 @ExtendWith(ApplicationExtension.class)
