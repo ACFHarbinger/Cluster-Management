@@ -14,15 +14,17 @@ public class Monitor extends MonitorUI {
 
     HashMap<String,String> config = new HashMap<>();
 
-    public Monitor()
+    public Monitor(IO io)
     {
-        io = new IO();
+        this.io = io;
 
         readConfig();
 
         setPrefSize(Integer.parseInt(config.get("SCREEN_WIDTH")), Integer.parseInt(config.get("SCREEN_HEIGHT")));
         loadNodes();
+    }
 
+    public void startServerThread() {
         new Thread(new Task<Void>() {
             @Override
             protected Void call()
