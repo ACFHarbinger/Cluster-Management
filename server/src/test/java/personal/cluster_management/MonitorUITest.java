@@ -86,7 +86,7 @@ class MonitorTest {
     // --- Server Control Tests ---
 
     @Test
-    void testStopServer_SetsFlagAndClosesSockets() throws Exception {
+    void testStopServerSetsFlagAndClosesSockets() throws Exception {
         // Use reflection to set internal ServerSocket for testing stopServer()
         java.lang.reflect.Field ssField = Monitor.class.getDeclaredField("serverSocket");
         ssField.setAccessible(true);
@@ -116,7 +116,7 @@ class MonitorTest {
     // --- Configuration Tests ---
 
     @Test
-    void testReadConfig_Success() throws Exception {
+    void testReadConfigSuccess() throws Exception {
         // Setup: done in BeforeEach (returns 1000, 800, 8080)
         
         // Act: Read config is called in constructor, but can be called again
@@ -136,7 +136,7 @@ class MonitorTest {
     }
 
     @Test
-    void testReadConfig_Failure_CreatesDefaults() throws Exception {
+    void testReadConfigFailureCreatesDefaults() throws Exception {
         // Setup: Configure mock to throw an exception (simulating file not found/corrupt)
         when(mockIO.readFileArranged(anyString(), anyString())).thenThrow(new IOException("File not found"));
         
@@ -166,7 +166,7 @@ class MonitorTest {
     // --- Data Processing Tests ---
 
     @Test
-    void testProcess_ValidData_UpdatesGauges() {
+    void testProcessValidDataUpdatesGauges() {
         // Sample data string matching the 10 expected fields
         String dataString = "10.5,55.0,2000,99.9,80.1,3500,20480,32768,8192,4096"; // CPU_LOAD, CPU_TEMP, CPU_FAN, GPU_LOAD, GPU_TEMP, GPU_FAN, USED_VRAM, TOTAL_VRAM, USED_RAM, AVAILABLE_RAM
         
@@ -196,7 +196,7 @@ class MonitorTest {
     }
 
     @Test
-    void testProcess_MalformedData_LogsError() {
+    void testProcessMalformedDataLogsError() {
         String malformedData = "10.5,55.0,2000,99.9,80.1"; // Only 5 fields
         
         monitor.process(malformedData);
@@ -208,7 +208,7 @@ class MonitorTest {
     }
 
     @Test
-    void testProcess_NonNumericData_Skipped() {
+    void testProcessNonNumericDataSkipped() {
         // GPU_LOAD is set to "N/A"
         String dataString = "10.5,55.0,2000,N/A,80.1,3500,20480,32768,8192,4096";
         

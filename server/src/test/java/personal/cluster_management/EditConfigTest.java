@@ -8,7 +8,7 @@ class EditConfigTest {
 
     @Test
     @DisplayName("checkNo should return true for valid numbers")
-    void checkNo_ValidNumber() {
+    void checkNoValidNumber() {
         assertTrue(EditConfig.checkNo("123"), "Positive integer");
         assertTrue(EditConfig.checkNo("0"), "Zero");
         assertTrue(EditConfig.checkNo("-45"), "Negative integer");
@@ -16,7 +16,7 @@ class EditConfigTest {
 
     @Test
     @DisplayName("checkNo should return false for invalid numbers")
-    void checkNo_InvalidNumber() {
+    void checkNoInvalidNumber() {
         assertFalse(EditConfig.checkNo("abc"), "Plain string");
         assertFalse(EditConfig.checkNo("12.34"), "Decimal number");
         assertFalse(EditConfig.checkNo("1 2 3"), "Number with spaces");
@@ -25,7 +25,7 @@ class EditConfigTest {
 
     @Test
     @DisplayName("checkNo should throw exception for null input")
-    void checkNo_NullInput() {
+    void checkNoNullInput() {
         // The implementation uses Integer.parseInt, which throws NumberFormatException for null
         assertThrows(NumberFormatException.class, () -> {
             EditConfig.checkNo(null);

@@ -82,7 +82,7 @@ public class DashUITest {
 
     @Test
     @TestFailsWithoutJavaFX
-    void testSaveButton_ValidationFails_ShowsErrorAlert(FxRobot robot) {
+    void testSaveButtonValidationFailsShowsErrorAlert(FxRobot robot) {
         // Act: Click the "Save" button with empty fields
         robot.clickOn(LabeledMatchers.hasText("Save"));
 
@@ -102,7 +102,7 @@ public class DashUITest {
 
     @Test
     @TestFailsWithoutJavaFX
-    void testSaveButton_Success_CallsService(FxRobot robot) {
+    void testSaveButtonSuccessCallsService(FxRobot robot) {
         // Arrange: Fill in all the fields with valid data
         // We can query by the label text, which is more robust than IDs
         // Note: FxRobot types very fast.

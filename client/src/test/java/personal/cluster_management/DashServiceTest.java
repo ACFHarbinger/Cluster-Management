@@ -45,7 +45,7 @@ class DashServiceTest {
 
     @Test
     @DisplayName("readConfig() should correctly parse a valid config file")
-    void testReadConfig_HappyPath() throws Exception {
+    void testReadConfigHappyPath() throws Exception {
         // Arrange
         String fakeConfig = "127.0.0.1\n" +
                 "8080\n" +
@@ -77,7 +77,7 @@ class DashServiceTest {
 
     @Test
     @DisplayName("readConfig() should return empty map if file is too short")
-    void testReadConfig_ShortFile() throws Exception {
+    void testReadConfigShortFile() throws Exception {
         // Arrange
         String fakeConfig = "127.0.0.1\n8080"; // Only 2 lines
         String configPath = currentDir + File.separator + "config.cfg";
@@ -93,7 +93,7 @@ class DashServiceTest {
 
     @Test
     @DisplayName("readConfig() should return empty map on file read error")
-    void testReadConfig_ReadError() throws Exception {
+    void testReadConfigReadError() throws Exception {
         // Arrange
         String configPath = currentDir + File.separator + "config.cfg";
         when(mockIo.readFile(configPath)).thenThrow(new IOException("File not found"));
@@ -124,7 +124,7 @@ class DashServiceTest {
 
     @Test
     @DisplayName("getValuesFromWMI() should correctly parse shell output")
-    void testGetValuesFromWMI_Parsing() throws Exception {
+    void testGetValuesFromWMIParsing() throws Exception {
         // Arrange
         // This is a fake string mimicking the output of the PowerShell command
         // *after* the .replace() method has run.
@@ -159,7 +159,7 @@ class DashServiceTest {
 
     @Test
     @DisplayName("getValuesFromWMI() should propagate shell exceptions")
-    void testGetValuesFromWMI_ShellError() throws Exception {
+    void testGetValuesFromWMIShellError() throws Exception {
         // Arrange
         when(mockIo.getShellOutput(anyString())).thenThrow(new RuntimeException("PowerShell command failed"));
 
@@ -225,7 +225,7 @@ class DashServiceTest {
 
     @Test
     @DisplayName("disconnectSocket() should close socket and call io.setSocket(null)")
-    void testDisconnectSocket_WhenConnected() throws Exception {
+    void testDisconnectSocketWhenConnected() throws Exception {
         // Arrange
         when(mockIo.getSocket()).thenReturn(mockSocket);
 
@@ -239,7 +239,7 @@ class DashServiceTest {
 
     @Test
     @DisplayName("disconnectSocket() should do nothing if already disconnected")
-    void testDisconnectSocket_WhenNotConnected() throws Exception {
+    void testDisconnectSocketWhenNotConnected() throws Exception {
         // Arrange
         when(mockIo.getSocket()).thenReturn(null);
 

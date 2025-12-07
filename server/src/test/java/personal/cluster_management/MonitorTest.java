@@ -211,7 +211,7 @@ class MonitorTest {
     }
 
     @Test
-    void testProcess_NonNumericDataSkipped() {
+    void testProcessNonNumericDataSkipped() {
         // GPU_LOAD is set to "N/A"
         String dataString = "10.5,55.0,2000,N/A,80.1,3500,20480,32768,8192,4096";
         

@@ -58,7 +58,7 @@ class IOTest {
     }
     
     @Test
-    void testReadFileRaw_FileNotFound() {
+    void testReadFileRawFileNotFound() {
         // Arrange
         String nonExistentFile = tempDir.resolve("non_existent_file.txt").toString();
 

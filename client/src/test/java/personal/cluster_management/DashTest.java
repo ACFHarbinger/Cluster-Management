@@ -92,7 +92,7 @@ class DashTest {
 
     @Test
     @DisplayName("validateConfig() should return 'OK' when all fields are valid")
-    void testConfigValidation_Success() {
+    void testConfigValidationSuccess() {
         // The @BeforeEach already filled the fields with valid data
         String result = dashController.validateConfig();
         assertEquals("OK", result);
@@ -100,7 +100,7 @@ class DashTest {
 
     @Test
     @DisplayName("validateConfig() should detect empty CPU Load Name")
-    void testConfigValidation_EmptyField() {
+    void testConfigValidationEmptyField() {
         // Arrange: Make one field invalid
         realView.CPULoadNameTextField.setText("");
 
@@ -114,7 +114,7 @@ class DashTest {
 
     @Test
     @DisplayName("validateConfig() should detect invalid Refresh Interval")
-    void testConfigValidation_InvalidNumber() {
+    void testConfigValidationInvalidNumber() {
         // Arrange: Make a number field invalid
         realView.dataRefreshIntervalTextField.setText("not-a-number");
 
@@ -128,7 +128,7 @@ class DashTest {
 
     @Test
     @DisplayName("saveConfig() should call service when validation is OK")
-    void testSaveConfig_Success() {
+    void testSaveConfigSuccess() {
         // Arrange: (Fields are already valid from setup)
 
         // Act
@@ -146,7 +146,7 @@ class DashTest {
 
     @Test
     @DisplayName("saveConfig() should not call service when validation fails")
-    void testSaveConfig_ValidationFails() {
+    void testSaveConfigValidationFails() {
         // Arrange: Make a field invalid
         realView.CPULoadNameTextField.setText("");
 
