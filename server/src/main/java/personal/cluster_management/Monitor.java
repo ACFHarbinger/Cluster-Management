@@ -46,6 +46,10 @@ public class Monitor implements MonitorInterface {
         view.loadNodes(); // Initialize UI components
     }
 
+    protected MonitorUIInterface createView() {
+        return new MonitorUI();
+    }
+
     @Override
     public StackPane getView() {
         return view.getRootNode();

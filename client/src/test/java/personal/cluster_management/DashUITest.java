@@ -7,12 +7,10 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testfx.api.FxAssert;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
@@ -20,7 +18,7 @@ import org.testfx.matcher.control.LabeledMatchers;
 
 import java.util.HashMap;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -86,7 +84,7 @@ public class DashUITest {
     @TestFailsWithoutJavaFX
     void testSaveButton_ValidationFails_ShowsErrorAlert(FxRobot robot) {
         // Act: Click the "Save" button with empty fields
-        robot.clickOn(LabeledMatchers.text("Save"));
+        robot.clickOn(LabeledMatchers.hasText("Save"));
 
         // Assert: Check that an error dialog (Alert) is shown
         Node dialogPane = robot.lookup(".dialog-pane").query();
@@ -99,7 +97,7 @@ public class DashUITest {
         assertTrue(pane.getContentText().contains("Server IP cannot be empty!"));
 
         // Clean up: Click the "OK" button on the alert
-        robot.clickOn(LabeledMatchers.text("OK"));
+        robot.clickOn(LabeledMatchers.hasText("OK"));
     }
 
     @Test
@@ -123,7 +121,7 @@ public class DashUITest {
         robot.clickOn((TextField) robot.lookup("#AvailableRAMNameTextField").query()).write("RAM Avail");
 
         // Act: Click the "Save" button
-        robot.clickOn(LabeledMatchers.text("Save"));
+        robot.clickOn(LabeledMatchers.hasText("Save"));
 
         // Assert: Verify the service's saveConfig method was called
         verify(mockService).saveConfig(argThat(arr ->
@@ -140,7 +138,7 @@ public class DashUITest {
         assertEquals("Configuration saved successfully.", pane.getContentText());
 
         // Clean up
-        robot.clickOn(LabeledMatchers.text("OK"));
+        robot.clickOn(LabeledMatchers.hasText("OK"));
     }
 
     // A helper annotation for tests that might be flaky without a running FX environment
