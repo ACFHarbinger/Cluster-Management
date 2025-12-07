@@ -1,4 +1,4 @@
-package personal.cluster_management;
+package personal.cluster_management.client;
 
 import javafx.application.Platform;
 import javafx.scene.Node;
@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

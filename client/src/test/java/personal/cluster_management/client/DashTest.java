@@ -1,7 +1,8 @@
-package personal.cluster_management;
+package personal.cluster_management.client;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

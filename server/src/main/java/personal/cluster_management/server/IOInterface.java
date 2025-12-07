@@ -1,4 +1,4 @@
-package personal.cluster_management;
+package personal.cluster_management.server;
 
 /**
  * Interface for IO operations used by the Monitor and EditConfig utility.

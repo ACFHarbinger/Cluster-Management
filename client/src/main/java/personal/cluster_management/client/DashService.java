@@ -1,4 +1,4 @@
-package personal.cluster_management;
+package personal.cluster_management.client;
 
 import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.WinReg;

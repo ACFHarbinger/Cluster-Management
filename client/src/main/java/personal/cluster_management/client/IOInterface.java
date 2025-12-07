@@ -1,4 +1,4 @@
-package personal.cluster_management;
+package personal.cluster_management.client;
 
 import java.io.IOException;
 import java.net.Socket;

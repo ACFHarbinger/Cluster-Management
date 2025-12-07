@@ -1,9 +1,10 @@
-package personal.cluster_management;
+package personal.cluster_management.server;
 
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.tilesfx.Tile;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

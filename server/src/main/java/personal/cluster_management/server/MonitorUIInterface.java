@@ -1,4 +1,4 @@
-package personal.cluster_management;
+package personal.cluster_management.server;
 
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.tilesfx.Tile;

@@ -1,6 +1,7 @@
-package personal.cluster_management;
+package personal.cluster_management.server;
 
 import javafx.scene.layout.StackPane;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

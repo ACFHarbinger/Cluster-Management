@@ -1,4 +1,4 @@
-package personal.cluster_management;
+package personal.cluster_management.server;
 
 import javafx.scene.layout.StackPane;
 

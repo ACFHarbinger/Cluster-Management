@@ -1,4 +1,4 @@
-package personal.cluster_management;
+package personal.cluster_management.server;
 
 /**
  * A command-line utility for editing the 'config' file used by the Monitor.
