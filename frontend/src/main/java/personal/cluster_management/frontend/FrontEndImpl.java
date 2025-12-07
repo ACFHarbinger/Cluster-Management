@@ -29,6 +29,14 @@ public class FrontEndImpl extends DistributedJobServiceGrpc.DistributedJobServic
         }
     }
 
+    /**
+     * Constructor for dependency injection (useful for testing).
+     * @param backendChannels List of pre-configured channels.
+     */
+    public FrontEndImpl(List<ManagedChannel> backendChannels) {
+        this.backendChannels = backendChannels;
+    }
+
     @Override
     public void submitJob(JobRequest request, StreamObserver<JobStatusResponse> responseObserver) {
         System.out.println("Frontend: Received Job Request " + request.getJobId());

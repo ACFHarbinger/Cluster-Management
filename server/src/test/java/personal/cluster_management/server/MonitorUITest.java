@@ -42,7 +42,7 @@ class MonitorUITest {
     }
 
     @Test
-    void testLoadNodes_InitialState() {
+    void testLoadNodesInitialState() {
         // Assert that the initial pane is 'notConnected' (default behavior)
         // Check that the root node is the MonitorUI itself (as it extends StackPane)
         assertEquals(monitorUI, monitorUI.getRootNode());
@@ -56,7 +56,7 @@ class MonitorUITest {
     }
 
     @Test
-    void testSwitchPane_Gauges() {
+    void testSwitchPaneGauges() {
         monitorUI.switchPane(MonitorPaneEnum.gauges);
         // We trust the toFront() method works, and verify the side effect: resetAllNodes should be called.
         
@@ -66,7 +66,7 @@ class MonitorUITest {
     }
     
     @Test
-    void testSwitchPane_NotConnected() {
+    void testSwitchPaneNotConnected() {
         // First, switch to gauges to ensure a component is not null
         monitorUI.switchPane(MonitorPaneEnum.gauges);
         
