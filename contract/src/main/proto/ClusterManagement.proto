@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package personal.cluster_management;
+
+option java_multiple_files = true;
+option java_package = "personal.cluster_management.proto";
+option java_outer_classname = "ClusterManagementProto";
+
+
+// Message representing the status of a single server/node.
+message ServerInfo {
+  string host_name = 1;
+  string ip_address = 2;
+  
+  // High-level availability status
+  enum Availability {
+    UNKNOWN = 0;
+    AVAILABLE = 1;
+    BUSY = 2; // Running one or more jobs
+    OFFLINE = 3;
+    MAINTENANCE = 4;
+  }
+  
+  Availability status = 3;
+  
+  // Basic Resource Metrics
+  double current_cpu_load = 4; // Percentage
+  double current_gpu_load = 5; // Percentage
+  double total_ram_gb = 6;
+  double available_ram_gb = 7;
+  
+  // Optional: List of job IDs currently running on this server
+  repeated string running_job_ids = 8;
+}
+
+// Response containing the status of all requested servers.
+message ServerStatusResponse {
+  // A repeated list of all available server statuses.
+  repeated ServerInfo servers = 1;
+}
+
+// Message received by the client signaling the final status of a submitted job.
+message JobStatusResponse {
+  // The unique identifier of the job this status update refers to.
+  string job_id = 1;
+  
+  // An enumeration of possible final states for a job.
+  enum Status {
+    UNKNOWN = 0;
+    RUNNING = 1;
+    COMPLETED_SUCCESS = 2;
+    COMPLETED_FAILURE = 3;
+    KILLED_BY_USER = 4;
+    EXECUTION_ERROR = 5; // e.g., command not found
+  }
+  
+  // The final status of the job.
+  Status status = 2;
+  
+  // The exit code of the process (0 for success).
+  int32 exit_code = 3;
+  
+  // A short message explaining the result or error.
+  string message = 4;
+}

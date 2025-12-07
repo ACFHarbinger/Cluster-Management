@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package personal.cluster_management;
+
+option java_multiple_files = true;
+option java_package = "personal.cluster_management.proto";
+option java_outer_classname = "SystemMetricsProto";
+
+// Message representing the system performance data sent from Client to Server.
+// Based on the fields parsed in Monitor.java process() method.
+message SystemMetrics {
+  // Index 0: CPU_LOAD
+  double cpu_load = 1;
+
+  // Index 1: CPU_TEMP
+  double cpu_temp = 2;
+
+  // Index 2: CPU_FAN
+  double cpu_fan_speed = 3;
+
+  // Index 3: GPU_LOAD
+  double gpu_load = 4;
+
+  // Index 4: GPU_TEMP
+  double gpu_temp = 5;
+
+  // Index 5: GPU_FAN
+  double gpu_fan_speed = 6;
+
+  // Index 6: USED_VRAM
+  double used_vram = 7;
+
+  // Index 7: TOTAL_VRAM
+  double total_vram = 8;
+
+  // Index 8: USED_RAM
+  double used_ram = 9;
+
+  // Index 9: AVAILABLE_RAM
+  double available_ram = 10;
+}
